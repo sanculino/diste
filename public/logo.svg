@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 72" fill="none" role="img" aria-labelledby="logoTitle">
+  <title id="logoTitle">DI.S.TE. MANAGEMENT S.a.s.</title>
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0B4F8C"/>
+      <stop offset="100%" stop-color="#1FA3A0"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1FA3A0"/>
+      <stop offset="100%" stop-color="#2E8B57"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="8" width="6" height="48" rx="2" fill="url(#g1)"/>
+  <text x="16" y="46" font-family="system-ui, Segoe UI, sans-serif" font-size="28" font-weight="700" fill="#0B2F4A">DI.S.TE.</text>
+  <text x="16" y="62" font-family="system-ui, Segoe UI, sans-serif" font-size="11" font-weight="600" letter-spacing="0.12em" fill="url(#g2)">MANAGEMENT S.a.s.</text>
+  <text x="200" y="38" font-family="system-ui, Segoe UI, sans-serif" font-size="9" font-weight="500" fill="#64748B" letter-spacing="0.02em">Dipartimento Studi Territoriali</text>
+</svg>
