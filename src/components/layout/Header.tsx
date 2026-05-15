@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { navLinks } from "@/content/site";
 
 export function Header() {
@@ -25,15 +25,8 @@ export function Header() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <Image
-            src="/logo.png"
-            alt="DI.S.TE. MANAGEMENT S.a.s."
-            width={180}
-            height={101}
-            className="h-9 w-auto sm:h-11"
-            priority
-          />
+        <Link href="/" className="flex shrink-0 items-center">
+          <BrandLogo variant="header" priority />
         </Link>
 
         <nav className="hidden items-center gap-1 text-sm font-medium text-slate-700 lg:flex">

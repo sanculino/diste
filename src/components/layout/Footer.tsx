@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { navLinks } from "@/content/site";
 
 export function Footer() {
@@ -8,13 +8,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
-            <Image
-              src="/logo.png"
-              alt="DI.S.TE. MANAGEMENT S.a.s."
-              width={200}
-              height={112}
-              className="h-12 w-auto rounded-md bg-white px-2 py-1"
-            />
+            <BrandLogo variant="footer" />
             <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-400">
               Consulenza, formazione, sistemi di gestione e soluzioni software per
               imprese, pubbliche amministrazioni e organizzazioni complesse.
