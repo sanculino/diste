@@ -9,11 +9,11 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="DI.S.TE. MANAGEMENT S.a.s."
-              width={220}
-              height={52}
-              className="h-10 w-auto brightness-0 invert opacity-90"
+              width={200}
+              height={112}
+              className="h-12 w-auto rounded-md bg-white px-2 py-1"
             />
             <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-400">
               Consulenza, formazione, sistemi di gestione e soluzioni software per

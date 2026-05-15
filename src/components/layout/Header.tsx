@@ -27,11 +27,11 @@ export function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <Image
-            src="/logo.svg"
+            src="/logo.png"
             alt="DI.S.TE. MANAGEMENT S.a.s."
-            width={200}
-            height={48}
-            className="h-9 w-auto sm:h-10"
+            width={180}
+            height={101}
+            className="h-9 w-auto sm:h-11"
             priority
           />
         </Link>
