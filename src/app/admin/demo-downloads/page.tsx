@@ -5,6 +5,8 @@ import { getDashboardStats } from "@/lib/demo-analytics/db";
 import { DemoDownloadsDashboard } from "./Dashboard";
 
 export const runtime = "nodejs";
+/** Always evaluate auth from the live request cookie — never cache this page. */
+export const dynamic = "force-dynamic";
 
 export default async function DemoDownloadsAdminPage() {
   const cookieStore = await cookies();

@@ -1,9 +1,12 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
   __resetAdminAuthForTests,
+  ADMIN_SESSION_COOKIE,
   createAdminSession,
   destroyAdminSession,
+  isRequestAuthorized,
   rateLimitLogin,
+  sessionTokenFromCookieHeader,
   verifyAdminPassword,
   verifyAdminSession,
 } from "@/lib/admin-auth";
@@ -39,11 +42,39 @@ describe("admin auth", () => {
     expect(verifyAdminSession(undefined)).toBe(false);
   });
 
+  it("same cookie validates for page and API without shared in-memory create state", () => {
+    // Reproduces production bug: login/API Map was not visible to Server Component.
+    const { sessionId: token } = createAdminSession();
+    __resetAdminAuthForTests(); // wipe process maps — HMAC session must still verify
+    expect(verifyAdminSession(token)).toBe(true);
+
+    const cookieHeader = `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}`;
+    expect(sessionTokenFromCookieHeader(cookieHeader)).toBe(token);
+    const apiReq = new Request("http://localhost/api/admin/demo-analytics", {
+      headers: { cookie: cookieHeader },
+    });
+    expect(isRequestAuthorized(apiReq)).toBe(true);
+
+    // Dashboard path uses the same verifier with cookies().get().value
+    expect(verifyAdminSession(token)).toBe(true);
+  });
+
+  it("no cookie is denied for API and fails page verifier", () => {
+    expect(verifyAdminSession(undefined)).toBe(false);
+    expect(isRequestAuthorized(new Request("http://localhost/api/admin/demo-analytics"))).toBe(
+      false,
+    );
+  });
+
   it("logout invalidates session", () => {
     const { sessionId } = createAdminSession();
     expect(verifyAdminSession(sessionId)).toBe(true);
     destroyAdminSession(sessionId);
     expect(verifyAdminSession(sessionId)).toBe(false);
+    const apiReq = new Request("http://localhost/api/admin/demo-analytics", {
+      headers: { cookie: `${ADMIN_SESSION_COOKIE}=${sessionId}` },
+    });
+    expect(isRequestAuthorized(apiReq)).toBe(false);
   });
 
   it("rate limits repeated login attempts", () => {

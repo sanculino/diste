@@ -13,8 +13,13 @@ const loginAttempts = new Map<string, RateBucket>();
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 const RATE_MAX_ATTEMPTS = 10;
 
-/** In-memory session store (invalidated on logout / restart). */
-const activeSessions = new Map<string, number>(); // sessionId -> expiresAtMs
+/**
+ * Optional logout denylist (best-effort within a process).
+ * Authentication itself must NOT depend on in-memory create-time state:
+ * Next.js Route Handlers and Server Components can run in separate module
+ * graphs / workers, so an in-memory "active sessions" Map is NOT shared.
+ */
+const revokedSessions = new Map<string, number>(); // sessionId -> expiresAtMs
 
 function adminKey(): string {
   return (process.env.LICENSE_ADMIN_KEY || "").trim();
@@ -70,37 +75,49 @@ export function clearLoginRateLimit(ip: string) {
   loginAttempts.delete(ip || "unknown");
 }
 
+/**
+ * Cookie token format (self-validating across workers / RSC vs route handlers):
+ *   <sessionIdHex>.<expiresAtMs>.<hmacHex>
+ * HMAC covers `${sessionId}.${expiresAtMs}` with sessionSecret().
+ */
 export function createAdminSession(): { sessionId: string; expiresAtMs: number } {
+  const secret = sessionSecret();
   const sessionId = crypto.randomBytes(32).toString("hex");
   const expiresAtMs = Date.now() + ADMIN_SESSION_MAX_AGE_SEC * 1000;
-  const secret = sessionSecret();
-  const sig = crypto.createHmac("sha256", secret).update(sessionId).digest("hex");
-  const token = `${sessionId}.${sig}`;
-  activeSessions.set(sessionId, expiresAtMs);
+  const payload = `${sessionId}.${expiresAtMs}`;
+  const sig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+  const token = `${payload}.${sig}`;
   return { sessionId: token, expiresAtMs };
 }
 
 export function verifyAdminSession(token: string | undefined | null): boolean {
   if (!token || !sessionSecret()) return false;
   const parts = token.split(".");
-  if (parts.length !== 2) return false;
-  const [sessionId, sig] = parts;
+  if (parts.length !== 3) return false;
+  const [sessionId, expStr, sig] = parts;
   if (!sessionId || !sig || !/^[a-f0-9]{64}$/i.test(sessionId)) return false;
-  const expected = crypto.createHmac("sha256", sessionSecret()).update(sessionId).digest("hex");
+  if (!/^\d{13,16}$/.test(expStr)) return false;
+  const expiresAtMs = Number(expStr);
+  if (!Number.isFinite(expiresAtMs) || Date.now() > expiresAtMs) return false;
+
+  const payload = `${sessionId}.${expStr}`;
+  const expected = crypto.createHmac("sha256", sessionSecret()).update(payload).digest("hex");
   if (!timingSafeEqualString(sig, expected)) return false;
-  const expires = activeSessions.get(sessionId);
-  if (!expires) return false;
-  if (Date.now() > expires) {
-    activeSessions.delete(sessionId);
-    return false;
-  }
+
+  const revokedUntil = revokedSessions.get(sessionId);
+  if (revokedUntil && Date.now() < revokedUntil) return false;
+
   return true;
 }
 
 export function destroyAdminSession(token: string | undefined | null) {
   if (!token) return;
-  const sessionId = token.split(".")[0];
-  if (sessionId) activeSessions.delete(sessionId);
+  const parts = token.split(".");
+  const sessionId = parts[0];
+  if (!sessionId || !/^[a-f0-9]{64}$/i.test(sessionId)) return;
+  const expStr = parts[1];
+  const expiresAtMs = expStr && /^\d+$/.test(expStr) ? Number(expStr) : Date.now() + ADMIN_SESSION_MAX_AGE_SEC * 1000;
+  revokedSessions.set(sessionId, expiresAtMs);
 }
 
 export function adminCookieOptions(maxAgeSec: number = ADMIN_SESSION_MAX_AGE_SEC) {
@@ -113,6 +130,23 @@ export function adminCookieOptions(maxAgeSec: number = ADMIN_SESSION_MAX_AGE_SEC
   };
 }
 
+/** Shared: extract session token from a Cookie request header. */
+export function sessionTokenFromCookieHeader(cookieHeader: string | null): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp(`${ADMIN_SESSION_COOKIE}=([^;]+)`));
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1].trim());
+  } catch {
+    return match[1].trim();
+  }
+}
+
+/** Shared: authorize a Request (API routes). */
+export function isRequestAuthorized(request: Request): boolean {
+  return verifyAdminSession(sessionTokenFromCookieHeader(request.headers.get("cookie")));
+}
+
 /** Extract client IP for rate limiting only — respects TRUST_PROXY. */
 export function loginClientIp(request: Request): string {
   if (process.env.TRUST_PROXY === "1") {
@@ -120,7 +154,6 @@ export function loginClientIp(request: Request): string {
     if (real) return real.slice(0, 64);
     const xff = request.headers.get("x-forwarded-for");
     if (xff) {
-      // nginx should overwrite XFF with $remote_addr — use first (only) hop
       return xff.split(",")[0]?.trim().slice(0, 64) || "unknown";
     }
   }
@@ -130,5 +163,5 @@ export function loginClientIp(request: Request): string {
 /** Test helpers */
 export function __resetAdminAuthForTests() {
   loginAttempts.clear();
-  activeSessions.clear();
+  revokedSessions.clear();
 }
