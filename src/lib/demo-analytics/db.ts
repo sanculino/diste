@@ -34,8 +34,14 @@ let dbInstance: Database.Database | null = null;
 
 function dbPath(): string {
   const env = process.env.DEMO_ANALYTICS_DB_PATH?.trim();
-  if (env) return env;
-  return path.join(process.cwd(), "data", "demo_download_events.db");
+  if (env) {
+    // Absolute paths (e.g. /var/lib/.../demo_download_events.db) used as-is.
+    if (path.isAbsolute(env)) return env;
+    // Relative env paths resolve under cwd; turbopackIgnore avoids NFT whole-tree tracing.
+    return path.join(/* turbopackIgnore: true */ process.cwd(), env);
+  }
+  // Default: scope under ./data only (never traverse outside that folder via this fallback).
+  return path.join(/* turbopackIgnore: true */ process.cwd(), "data", "demo_download_events.db");
 }
 
 export function getAnalyticsDb(): Database.Database {

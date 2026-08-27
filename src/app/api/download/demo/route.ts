@@ -25,7 +25,13 @@ const SESSION_COOKIE = "pmwa_demo_dl";
 const SESSION_MAX_AGE = 60 * 60 * 24; // 24h — correlate range/resume
 
 function demoFilePath(): string {
-  return path.join(process.cwd(), "public", "downloads", DEMO_FILENAME);
+  // Scoped under public/downloads; turbopackIgnore prevents NFT whole-project tracing.
+  return path.join(
+    /* turbopackIgnore: true */ process.cwd(),
+    "public",
+    "downloads",
+    DEMO_FILENAME,
+  );
 }
 
 function utcNow(): string {
