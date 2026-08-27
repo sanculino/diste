@@ -3,11 +3,20 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
-import { navLinks } from "@/content/site";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { navLinks, navLinksEn } from "@/content/site";
+import { usePathname } from "next/navigation";
+import type { Locale } from "@/i18n/config";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const pathname = usePathname() || "/";
+  const isEn = pathname === "/en" || pathname.startsWith("/en/");
+  const locale: Locale = isEn ? "en" : "it";
+  const homeHref = isEn ? "/en" : "/";
+  const links = isEn ? navLinksEn : navLinks;
+  const contactLabel = isEn ? "Contact us" : "Contattaci";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -25,12 +34,12 @@ export function Header() {
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center">
+        <Link href={homeHref} className="flex shrink-0 items-center">
           <BrandLogo variant="header" priority />
         </Link>
 
         <nav className="hidden items-center gap-1 text-sm font-medium text-slate-700 lg:flex">
-          {navLinks.map((l) => (
+          {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
@@ -42,11 +51,15 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher
+            locale={locale}
+            switchLabel={isEn ? "Italiano" : "English"}
+          />
           <a
-            href="#contatti"
+            href={isEn ? "/en#contatti" : "/#contatti"}
             className="hidden rounded-full bg-gradient-to-r from-diste-blue via-diste-azure to-diste-green px-4 py-2 text-sm font-semibold text-white shadow-md shadow-diste-blue/20 transition hover:brightness-110 sm:inline-flex"
           >
-            Contattaci
+            {contactLabel}
           </a>
           <button
             type="button"
@@ -83,7 +96,7 @@ export function Header() {
       {open && (
         <div className="border-t border-slate-200 bg-white px-4 py-4 lg:hidden">
           <div className="flex flex-col gap-1">
-            {navLinks.map((l) => (
+            {links.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
@@ -94,11 +107,11 @@ export function Header() {
               </a>
             ))}
             <a
-              href="#contatti"
+              href={isEn ? "/en#contatti" : "/#contatti"}
               className="mt-2 rounded-full bg-gradient-to-r from-diste-blue via-diste-azure to-diste-green px-4 py-3 text-center text-sm font-semibold text-white"
               onClick={() => setOpen(false)}
             >
-              Contattaci
+              {contactLabel}
             </a>
           </div>
         </div>

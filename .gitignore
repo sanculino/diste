@@ -23,15 +23,43 @@
 # misc
 .DS_Store
 *.pem
+*.key
+*.p12
+*.pfx
+*.raw
+license_keys/
+PRIVATE_KEY_DO_NOT_DISTRIBUTE*
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# protected commercial installers (never public, never commit)
+/private/
+/private/downloads/
+/private/downloads/*.exe
+
+# python / license API
+__pycache__/
+*.py[cod]
+.pytest_cache/
+license_api/licenses.db
+data/
+data/demo_download_events.db
+data/test_demo_download_events.db
+*.db
+*.sqlite
+*.sqlite3
+
+# local IDE (optional — exclude from commits)
+.vscode/
 
 # vercel
 .vercel
@@ -39,3 +67,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Oversized public installers — deploy to VPS only (GitHub 100MB limit)
+/public/downloads/*.exe
+/public/downloads/*.zip
+!/public/downloads/README.txt
+

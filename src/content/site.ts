@@ -1,14 +1,27 @@
 /** Contenuti centralizzati: modifica qui per aggiornare testi e liste. */
 
 export const navLinks = [
-  { href: "#chi-siamo", label: "Chi siamo" },
-  { href: "#mission", label: "Mission & Vision" },
-  { href: "#servizi", label: "Servizi" },
-  { href: "#software", label: "Software" },
-  { href: "#progetti", label: "Progetti" },
-  { href: "#clienti", label: "Clienti" },
-  { href: "#partner", label: "Partner" },
-  { href: "#contatti", label: "Contatti" },
+  { href: "/#chi-siamo", label: "Chi siamo" },
+  { href: "/#mission", label: "Mission & Vision" },
+  { href: "/#servizi", label: "Servizi" },
+  { href: "/#software", label: "Software" },
+  { href: "/#progetti", label: "Progetti" },
+  { href: "/pm-web-agent", label: "PM Web Agent" },
+  { href: "/#clienti", label: "Clienti" },
+  { href: "/#partner", label: "Partner" },
+  { href: "/#contatti", label: "Contatti" },
+] as const;
+
+export const navLinksEn = [
+  { href: "/en#chi-siamo", label: "About us" },
+  { href: "/en#mission", label: "Mission & Vision" },
+  { href: "/en#servizi", label: "Services" },
+  { href: "/en#software", label: "Software" },
+  { href: "/en#progetti", label: "Projects" },
+  { href: "/en/pm-web-agent", label: "PM Web Agent" },
+  { href: "/en#clienti", label: "Clients" },
+  { href: "/en#partner", label: "Partners" },
+  { href: "/en#contatti", label: "Contact" },
 ] as const;
 
 export const hero = {
@@ -79,26 +92,37 @@ export const progetti = {
       name: "Upostu",
       description:
         "Marketplace per la disponibilità e ricerca di parcheggi. Sistema pensato per permettere agli utenti di segnalare posti liberi e aiutare chi cerca parcheggio.",
+      href: undefined as string | undefined,
+      badge: "In sviluppo",
     },
     {
       name: "Sanculino",
       description:
         "Marketplace dedicato al turismo, pensato per mettere in contatto visitatori, attività locali, servizi turistici, esperienze e offerte territoriali.",
+      href: undefined as string | undefined,
+      badge: "In sviluppo",
     },
     {
-      name: "Palermo Business Agent",
+      name: "PM Web Agent",
       description:
-        "Sistema di scraper e business agent per ottenere email di categorie merceologiche, creare mailing list, fare attività di marketing, ricerca fornitori e sviluppo commerciale.",
+        "Software Windows per business discovery e ricerca commerciale B2B su aziende italiane: lead research, supplier discovery e organizzazione contatti.",
+      href: "/pm-web-agent",
+      enHref: "/en/pm-web-agent",
+      badge: "In vendita",
     },
     {
       name: "Gestionale Commesse Edilizia",
       description:
         "Piattaforma per aziende del settore edilizio per gestire clienti, prodotti, ordini, commesse, storico, categorie, documenti e workflow aziendali.",
+      href: undefined as string | undefined,
+      badge: "In sviluppo",
     },
     {
       name: "BeanOS",
       description:
         "Gestionale per aziende che producono capsule e cialde di caffè. Deve gestire ordini, clienti, agenti, produzione, lotti, tracciabilità, magazzino, miscele e avanzamento lavorazioni.",
+      href: undefined as string | undefined,
+      badge: "In sviluppo",
     },
   ],
 };
