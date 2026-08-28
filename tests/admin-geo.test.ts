@@ -129,6 +129,14 @@ describe("geo / proxy trust", () => {
     expect(resolveClientIp(req)).toBe("203.0.113.10");
   });
 
+  it("returns UNKNOWN for localhost when TRUST_PROXY=1", () => {
+    process.env.TRUST_PROXY = "1";
+    const req = new Request("http://localhost/api/download/demo", {
+      headers: { "x-real-ip": "127.0.0.1" },
+    });
+    expect(detectCountry(req).code).toBe("UNKNOWN");
+  });
+
   it("UNKNOWN fallback when no geo source", () => {
     const geo = detectCountry(new Request("http://localhost/api/download/demo"));
     expect(geo.code).toBe("UNKNOWN");

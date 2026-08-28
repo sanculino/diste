@@ -1,4 +1,8 @@
 import { sanitizeTextField } from "@/lib/validation/sanitize";
+import {
+  mergeMarketingAttribution,
+  parseAttributionCookie,
+} from "@/lib/demo-analytics/attribution";
 
 const BOT_PATTERNS = [
   /bot/i,
@@ -45,49 +49,28 @@ export type MarketingMeta = {
 };
 
 export function parseMarketing(request: Request, url: URL): MarketingMeta {
-  const referrer = sanitizeTextField(request.headers.get("referer"), "generic") || null;
-  let referrer_domain: string | null = null;
-  if (referrer) {
-    try {
-      referrer_domain = new URL(referrer).hostname.toLowerCase();
-    } catch {
-      referrer_domain = null;
-    }
-  }
+  const requestReferrer =
+    sanitizeTextField(request.headers.get("referer"), "generic") || null;
 
-  const utm_source = sanitizeTextField(url.searchParams.get("utm_source"), "generic") || null;
-  const utm_medium = sanitizeTextField(url.searchParams.get("utm_medium"), "generic") || null;
-  const utm_campaign = sanitizeTextField(url.searchParams.get("utm_campaign"), "generic") || null;
+  const requestUtm = {
+    source: sanitizeTextField(url.searchParams.get("utm_source"), "generic") || null,
+    medium: sanitizeTextField(url.searchParams.get("utm_medium"), "generic") || null,
+    campaign: sanitizeTextField(url.searchParams.get("utm_campaign"), "generic") || null,
+  };
 
-  let marketing_source = "Direct";
-  const ref = (referrer_domain || "").toLowerCase();
-  const utm = (utm_source || "").toLowerCase();
-
-  if (utm.includes("facebook") || ref.includes("facebook.com") || ref.includes("fb.com")) {
-    marketing_source = "Facebook";
-  } else if (utm.includes("instagram") || ref.includes("instagram.com")) {
-    marketing_source = "Instagram";
-  } else if (utm.includes("linkedin") || ref.includes("linkedin.com")) {
-    marketing_source = "LinkedIn";
-  } else if (utm.includes("google") || ref.includes("google.")) {
-    marketing_source = "Google";
-  } else if (utm.includes("bing") || ref.includes("bing.com")) {
-    marketing_source = "Bing";
-  } else if (referrer_domain) {
-    marketing_source = "Other";
-  }
+  const stored = parseAttributionCookie(request.headers.get("cookie"));
+  const merged = mergeMarketingAttribution(requestReferrer, requestUtm, stored);
 
   return {
-    referrer,
-    referrer_domain,
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    marketing_source,
+    referrer: merged.referrer,
+    referrer_domain: merged.referrer_domain,
+    utm_source: merged.utm_source,
+    utm_medium: merged.utm_medium,
+    utm_campaign: merged.utm_campaign,
+    marketing_source: merged.marketing_source,
   };
 }
 
-// Re-export geo helpers so existing imports keep working
 export {
   detectCountry,
   resolveClientIp,

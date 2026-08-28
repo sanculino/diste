@@ -44,6 +44,49 @@ export function isValidIp(ip: string): boolean {
   return isIpv4(ip) || isIpv6(ip);
 }
 
+/** Normalize IPv4-mapped IPv6 and bracket notation for lookup. */
+export function normalizeClientIp(ip: string): string {
+  let value = ip.trim();
+  if (value.startsWith("[") && value.endsWith("]")) {
+    value = value.slice(1, -1);
+  }
+  const lower = value.toLowerCase();
+  if (lower.startsWith("::ffff:")) {
+    const mapped = value.slice(7);
+    if (isIpv4(mapped)) return mapped;
+  }
+  return value;
+}
+
+/** Private, loopback, link-local, and unspecified addresses → no public GeoIP lookup. */
+export function isPrivateOrReservedIp(ip: string): boolean {
+  const normalized = normalizeClientIp(ip);
+  if (!normalized || normalized === "0.0.0.0" || normalized === "::") return true;
+
+  if (isIpv4(normalized)) {
+    const parts = normalized.split(".").map((p) => parseInt(p, 10));
+    if (parts.some((p) => Number.isNaN(p) || p > 255)) return true;
+    const [a, b] = parts;
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 0) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a >= 224) return true; // multicast + reserved
+    return false;
+  }
+
+  if (isIpv6(normalized)) {
+    const l = normalized.toLowerCase();
+    if (l === "::1") return true;
+    if (l.startsWith("fe80:")) return true;
+    if (l.startsWith("fc") || l.startsWith("fd")) return true;
+  }
+
+  return false;
+}
+
 /**
  * Resolve client IP for ephemeral use (GeoIP / dedupe).
  * Only trusts proxy headers when TRUST_PROXY=1 (nginx must overwrite them).
@@ -51,10 +94,16 @@ export function isValidIp(ip: string): boolean {
 export function resolveClientIp(request: Request): string {
   if (process.env.TRUST_PROXY === "1") {
     const real = request.headers.get("x-real-ip")?.trim();
-    if (real && isValidIp(real)) return real;
+    if (real && isValidIp(normalizeClientIp(real))) return normalizeClientIp(real);
     const xff = request.headers.get("x-forwarded-for")?.trim();
     if (xff) {
-      const first = xff.split(",")[0]?.trim();
+      for (const part of xff.split(",")) {
+        const candidate = normalizeClientIp(part.trim());
+        if (candidate && isValidIp(candidate) && !isPrivateOrReservedIp(candidate)) {
+          return candidate;
+        }
+      }
+      const first = normalizeClientIp(xff.split(",")[0]?.trim() || "");
       if (first && isValidIp(first)) return first;
     }
   }
@@ -106,7 +155,7 @@ export function detectCountry(request: Request): GeoResult {
   }
 
   const ip = resolveClientIp(request);
-  if (ip && ip !== "0.0.0.0") {
+  if (ip && ip !== "0.0.0.0" && !isPrivateOrReservedIp(ip)) {
     try {
       const reader = loadGeoReader();
       if (reader) {
@@ -135,4 +184,8 @@ export function clientIpForDedupe(request: Request): string {
 
 export function __resetGeoReaderForTests() {
   geoReader = undefined;
+}
+
+export function __setGeoReaderForTests(reader: Reader<CountryResponse> | null) {
+  geoReader = reader;
 }

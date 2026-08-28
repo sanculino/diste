@@ -245,6 +245,16 @@ describe("marketing classification", () => {
     );
     expect(direct.marketing_source).toBe("Direct");
   });
+
+  it("classifies same-site referer without cookie as Direct", () => {
+    const meta = parseMarketing(
+      new Request("http://localhost/api/download/demo", {
+        headers: { referer: "https://distemanagementsoftware.it/pm-web-agent" },
+      }),
+      new URL("http://localhost/api/download/demo"),
+    );
+    expect(meta.marketing_source).toBe("Direct");
+  });
 });
 
 describe("bot filter", () => {
