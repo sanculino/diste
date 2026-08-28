@@ -96,7 +96,7 @@ export function computeDedupeId(ip: string, ua: string, secret: string): string 
   return crypto.createHmac("sha256", secret).update(`${ip}|${ua}|${day}`).digest("hex").slice(0, 32);
 }
 
-export function insertDemoEvent(row: Omit<DemoEventRow, never>) {
+export function insertDemoEvent(row: Omit<DemoEventRow, never>): boolean {
   try {
     const db = getAnalyticsDb();
     db.prepare(`
@@ -112,8 +112,34 @@ export function insertDemoEvent(row: Omit<DemoEventRow, never>) {
         @browser_family, @os_family, @language, @is_bot, @dedupe_identifier, @marketing_source
       )
     `).run(row);
+    return true;
+  } catch (err) {
+    /* analytics failure must not block download — log without secrets or IP */
+    const message = err instanceof Error ? err.message : "unknown";
+    console.error(`[demo-analytics] insert failed event=${row.event_id}: ${message}`);
+    return false;
+  }
+}
+
+/** Test / ops helper: count all non-bot events. */
+export function countDemoEvents(): number {
+  try {
+    const db = getAnalyticsDb();
+    return (db.prepare(`SELECT COUNT(*) AS c FROM demo_download_events`).get() as { c: number }).c;
   } catch {
-    /* analytics failure must not block download */
+    return 0;
+  }
+}
+
+/** Test helper: all events newest first. */
+export function listDemoEvents(): DemoEventRow[] {
+  try {
+    const db = getAnalyticsDb();
+    return db
+      .prepare(`SELECT * FROM demo_download_events ORDER BY created_utc DESC`)
+      .all() as DemoEventRow[];
+  } catch {
+    return [];
   }
 }
 

@@ -9,6 +9,10 @@ import {
   computeDedupeId,
 } from "@/lib/demo-analytics/db";
 import {
+  readDemoSessionCookie,
+  resolveDemoAttempt,
+} from "@/lib/demo-analytics/attempt-session";
+import {
   createDemoDownloadTracker,
   createPullBasedDemoFileStream,
 } from "@/lib/demo-analytics/download-stream";
@@ -25,7 +29,8 @@ export const runtime = "nodejs";
 
 const DEMO_FILENAME = "PMWebAgent_DEMO_Setup.exe";
 const SESSION_COOKIE = "pmwa_demo_dl";
-const SESSION_MAX_AGE = 60 * 60 * 24; // 24h — correlate range/resume
+/** Cookie lifetime for Range/resume correlation of the *current* attempt only. */
+const SESSION_MAX_AGE = 60 * 60 * 24;
 
 function demoFilePath(): string {
   return path.join(
@@ -53,15 +58,6 @@ function parseRange(rangeHeader: string | null, fileSize: number): { start: numb
   return { start, end };
 }
 
-function getOrCreateSessionId(request: Request): string {
-  const cookie = request.headers.get("cookie") || "";
-  const match = cookie.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
-  if (match?.[1] && /^[a-f0-9-]{36}$/i.test(match[1])) {
-    return match[1];
-  }
-  return crypto.randomUUID();
-}
-
 function sessionCookieHeader(sessionId: string): string {
   return `${SESSION_COOKIE}=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MAX_AGE}`;
 }
@@ -73,9 +69,6 @@ function recordStarted(
   fileSize: number,
   isBot: boolean,
 ) {
-  const existing = getSessionRow(sessionId);
-  if (existing && existing.status !== "bot") return;
-
   const ua = request.headers.get("user-agent") || "";
   const geo = detectCountry(request);
   const marketing = parseMarketing(request, url);
@@ -123,13 +116,18 @@ async function handleDownload(request: Request) {
   const url = new URL(request.url);
   const ua = request.headers.get("user-agent") || "";
   const isBot = isBotUserAgent(ua);
-  const sessionId = getOrCreateSessionId(request);
 
   const range = parseRange(request.headers.get("range"), fileSize);
-  const isInitial = !range || range.start === 0;
+  const cookieSessionId = readDemoSessionCookie(request.headers.get("cookie"), SESSION_COOKIE);
+  const existingRow = cookieSessionId ? getSessionRow(cookieSessionId) : undefined;
 
-  if (isInitial) {
-    recordStarted(request, url, sessionId, fileSize, isBot);
+  const attempt = resolveDemoAttempt(
+    { cookieSessionId, range, existingRow },
+    () => crypto.randomUUID(),
+  );
+
+  if (attempt.shouldRecordStarted) {
+    recordStarted(request, url, attempt.sessionId, fileSize, isBot);
   }
 
   const start = range?.start ?? 0;
@@ -137,9 +135,9 @@ async function handleDownload(request: Request) {
   const chunkSize = end - start + 1;
 
   const tracker = createDemoDownloadTracker({
-    sessionId,
+    sessionId: attempt.sessionId,
     fileSize,
-    rangeStart: range ? start : null,
+    rangeStart: range && range.start > 0 ? start : null,
     isBot,
   });
 
@@ -156,7 +154,7 @@ async function handleDownload(request: Request) {
     "Content-Disposition": `attachment; filename="${DEMO_FILENAME}"`,
     "Accept-Ranges": "bytes",
     "Cache-Control": "no-store",
-    "Set-Cookie": sessionCookieHeader(sessionId),
+    "Set-Cookie": sessionCookieHeader(attempt.sessionId),
   });
 
   if (range) {
