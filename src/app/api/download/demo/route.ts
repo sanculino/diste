@@ -6,9 +6,12 @@ import {
   getSessionRow,
   insertDemoEvent,
   newEventId,
-  updateSessionProgress,
   computeDedupeId,
 } from "@/lib/demo-analytics/db";
+import {
+  createDemoDownloadTracker,
+  createPullBasedDemoFileStream,
+} from "@/lib/demo-analytics/download-stream";
 import {
   clientIpForDedupe,
   detectCountry,
@@ -25,7 +28,6 @@ const SESSION_COOKIE = "pmwa_demo_dl";
 const SESSION_MAX_AGE = 60 * 60 * 24; // 24h — correlate range/resume
 
 function demoFilePath(): string {
-  // Scoped under public/downloads; turbopackIgnore prevents NFT whole-project tracing.
   return path.join(
     /* turbopackIgnore: true */ process.cwd(),
     "public",
@@ -134,43 +136,20 @@ async function handleDownload(request: Request) {
   const end = range?.end ?? fileSize - 1;
   const chunkSize = end - start + 1;
 
-  const nodeStream = fs.createReadStream(filePath, { start, end });
-  let bytesSent = 0;
-
-  const webStream = new ReadableStream({
-    start(controller) {
-      nodeStream.on("data", (chunk: Buffer | string) => {
-        const buf = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
-        bytesSent += buf.length;
-        controller.enqueue(buf);
-      });
-      nodeStream.on("end", () => {
-        controller.close();
-        if (isBot) return;
-        const row = getSessionRow(sessionId);
-        const prevSent = row?.bytes_sent || 0;
-        const totalSent = range ? Math.max(prevSent, start + bytesSent) : bytesSent;
-
-        if (totalSent >= fileSize) {
-          updateSessionProgress(sessionId, fileSize, "completed", utcNow());
-        } else {
-          updateSessionProgress(sessionId, totalSent, "started");
-        }
-      });
-      nodeStream.on("error", () => {
-        if (!isBot) updateSessionProgress(sessionId, bytesSent, "interrupted");
-        controller.error(new Error("stream error"));
-      });
-    },
-    cancel() {
-      nodeStream.destroy();
-      if (!isBot) {
-        const row = getSessionRow(sessionId);
-        const sent = (row?.bytes_sent || 0) + bytesSent;
-        if (sent < fileSize) updateSessionProgress(sessionId, sent, "interrupted");
-      }
-    },
+  const tracker = createDemoDownloadTracker({
+    sessionId,
+    fileSize,
+    rangeStart: range ? start : null,
+    isBot,
   });
+
+  const webStream = createPullBasedDemoFileStream(
+    filePath,
+    start,
+    end,
+    tracker,
+    request.signal,
+  );
 
   const headers = new Headers({
     "Content-Type": "application/octet-stream",

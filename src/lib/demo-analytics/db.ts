@@ -117,27 +117,81 @@ export function insertDemoEvent(row: Omit<DemoEventRow, never>) {
   }
 }
 
+export function updateSessionBytes(sessionId: string, bytesSent: number) {
+  try {
+    const db = getAnalyticsDb();
+    db.prepare(`
+      UPDATE demo_download_events
+      SET bytes_sent = @bytes_sent
+      WHERE download_session_id = @session_id AND status = 'started'
+    `).run({ session_id: sessionId, bytes_sent: bytesSent });
+  } catch {
+    /* analytics failure must not block download */
+  }
+}
+
+/**
+ * Terminal transition: started → completed | interrupted only.
+ * completed and interrupted rows are immutable (no second terminal write).
+ */
+export function finalizeDemoSession(
+  sessionId: string,
+  bytesSent: number,
+  status: "completed" | "interrupted",
+  completedUtc?: string,
+): boolean {
+  try {
+    const db = getAnalyticsDb();
+    if (status === "completed") {
+      const result = db
+        .prepare(
+          `
+        UPDATE demo_download_events
+        SET bytes_sent = bytes_expected, status = 'completed', completed_utc = @completed_utc
+        WHERE download_session_id = @session_id AND status = 'started'
+          AND bytes_expected > 0 AND @bytes_sent >= bytes_expected
+      `,
+        )
+        .run({
+          session_id: sessionId,
+          bytes_sent: bytesSent,
+          completed_utc:
+            completedUtc ??
+            new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+        });
+      return result.changes > 0;
+    }
+    const result = db
+      .prepare(
+        `
+      UPDATE demo_download_events
+      SET bytes_sent = @bytes_sent, status = 'interrupted'
+      WHERE download_session_id = @session_id AND status = 'started'
+        AND @bytes_sent < bytes_expected
+    `,
+      )
+      .run({ session_id: sessionId, bytes_sent: bytesSent });
+    return result.changes > 0;
+  } catch {
+    return false;
+  }
+}
+
 export function updateSessionProgress(
   sessionId: string,
   bytesSent: number,
   status: DemoEventStatus,
   completedUtc?: string,
 ) {
-  try {
-    const db = getAnalyticsDb();
-    db.prepare(`
-      UPDATE demo_download_events
-      SET bytes_sent = @bytes_sent, status = @status, completed_utc = COALESCE(@completed_utc, completed_utc)
-      WHERE download_session_id = @session_id AND status IN ('started', 'interrupted')
-    `).run({
-      session_id: sessionId,
-      bytes_sent: bytesSent,
-      status,
-      completed_utc: completedUtc ?? null,
-    });
-  } catch {
-    /* ignore */
+  if (status === "completed") {
+    finalizeDemoSession(sessionId, bytesSent, "completed", completedUtc);
+    return;
   }
+  if (status === "interrupted") {
+    finalizeDemoSession(sessionId, bytesSent, "interrupted");
+    return;
+  }
+  updateSessionBytes(sessionId, bytesSent);
 }
 
 export function getSessionRow(sessionId: string): DemoEventRow | undefined {
