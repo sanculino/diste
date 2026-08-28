@@ -4,6 +4,7 @@ type ItDictionary = typeof import("./dictionaries/it").dictionary;
 type EnDictionary = typeof import("./dictionaries/en").dictionary;
 
 export type Dictionary = ItDictionary | EnDictionary;
+export type SiteContent = ItDictionary["site"] | EnDictionary["site"];
 
 /** PM Web Agent copy — EN adds optional international marketing block */
 export type PmwaDictionary = ItDictionary["pmwa"] | EnDictionary["pmwa"];

@@ -1,17 +1,17 @@
 import { Section } from "@/components/ui/Section";
-import { clienti } from "@/content/site";
+import type { SiteContent } from "@/i18n/get-dictionary";
 
-export function Clienti() {
+type Props = { site: SiteContent };
+
+export function Clienti({ site }: Props) {
+  const { clienti } = site;
   return (
     <Section id="clienti" className="bg-slate-50/90">
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           {clienti.title}
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-          Organizzazioni pubbliche e private che hanno scelto il nostro supporto
-          per consulenza, formazione e innovazione.
-        </p>
+        <p className="mx-auto mt-3 max-w-2xl text-slate-600">{clienti.subtitle}</p>
       </div>
       <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {clienti.names.map((name) => (

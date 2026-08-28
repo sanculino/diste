@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Section } from "@/components/ui/Section";
-import { servizi } from "@/content/site";
+import type { SiteContent } from "@/i18n/get-dictionary";
 
 function IconShell({ children }: { children: ReactNode }) {
   return (
@@ -44,7 +44,10 @@ const icons = [
   </IconShell>,
 ];
 
-export function Servizi() {
+type Props = { site: SiteContent };
+
+export function Servizi({ site }: Props) {
+  const { servizi } = site;
   return (
     <Section
       id="servizi"
@@ -54,10 +57,7 @@ export function Servizi() {
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           {servizi.title}
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-          Competenze trasversali per qualità, sicurezza, ambiente, compliance e
-          digital transformation.
-        </p>
+        <p className="mx-auto mt-3 max-w-2xl text-slate-600">{servizi.subtitle}</p>
       </div>
       <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {servizi.items.map((item, i) => (
@@ -68,9 +68,7 @@ export function Servizi() {
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-diste-blue to-diste-green text-white shadow-md">
               {icons[i]}
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">
-              {item.title}
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
             <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">
               {item.description}
             </p>

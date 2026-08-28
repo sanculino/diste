@@ -1,3 +1,5 @@
+import { siteIt } from "./site-it";
+
 export const dictionary = {
   meta: {
     lang: "it",
@@ -171,7 +173,16 @@ export const dictionary = {
       "1pc": "PM Web Agent — Rinnovo Licenza 1 PC / 12 mesi",
       "3pc": "PM Web Agent — Rinnovo Licenza 3 PC / 12 mesi",
     },
+    misc: {
+      orderSaveFailed: "Salvataggio ordine non riuscito.",
+      genericError: "Errore",
+    },
+    guide: {
+      faqTitle: "FAQ",
+      buyPricing: "Acquista / Prezzi",
+    },
   },
+  site: siteIt,
 } as const;
 
 export type Dictionary = typeof dictionary;

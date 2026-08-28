@@ -1,29 +1,27 @@
 import Link from "next/link";
 import { Section } from "@/components/ui/Section";
-import { progetti } from "@/content/site";
+import { localePath, type Locale } from "@/i18n/config";
+import type { SiteContent } from "@/i18n/get-dictionary";
 
 type Props = {
-  locale?: "it" | "en";
+  site: SiteContent;
+  locale: Locale;
 };
 
-export function Progetti({ locale = "it" }: Props) {
-  const isEn = locale === "en";
+export function Progetti({ site, locale }: Props) {
+  const { progetti } = site;
   return (
     <Section id="progetti" className="bg-white">
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-          {isEn ? "Projects and platforms in development" : progetti.title}
+          {progetti.title}
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-          {isEn
-            ? "Digital platforms and products in evolution, designed with attention to territory and vertical sector needs."
-            : "Piattaforme e prodotti digitali in evoluzione, progettati con attenzione al territorio e alle esigenze dei settori verticali."}
-        </p>
+        <p className="mx-auto mt-3 max-w-2xl text-slate-600">{progetti.subtitle}</p>
       </div>
       <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {progetti.items.map((p, index) => {
-          const href =
-            "enHref" in p && isEn && p.enHref ? p.enHref : p.href;
+          const href = p.href ? localePath(locale, p.href) : undefined;
+          const badge = progetti.badges[p.badgeKey];
           const card = (
             <>
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-diste-azure/0 via-transparent to-diste-green/0 opacity-0 transition duration-300 group-hover:opacity-100 group-hover:from-diste-azure/5 group-hover:to-diste-green/10" />
@@ -38,18 +36,16 @@ export function Progetti({ locale = "it" }: Props) {
                       : "bg-white text-diste-blue ring-slate-200/80"
                   }`}
                 >
-                  {p.badge}
+                  {badge}
                 </span>
               </div>
-              <h3 className="relative mt-5 text-xl font-semibold text-slate-900">
-                {p.name}
-              </h3>
+              <h3 className="relative mt-5 text-xl font-semibold text-slate-900">{p.name}</h3>
               <p className="relative mt-3 flex-1 text-sm leading-relaxed text-slate-600">
                 {p.description}
               </p>
               {href ? (
                 <span className="relative mt-4 text-sm font-semibold text-diste-blue">
-                  {isEn ? "Buy / info →" : "Acquista / info →"}
+                  {progetti.buyLink}
                 </span>
               ) : null}
             </>

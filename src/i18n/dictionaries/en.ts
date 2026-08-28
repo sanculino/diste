@@ -1,3 +1,5 @@
+import { siteEn } from "./site-en";
+
 export const dictionary = {
   meta: {
     lang: "en",
@@ -175,7 +177,16 @@ export const dictionary = {
       "1pc": "PM Web Agent — Renew 1 PC License / 12 months",
       "3pc": "PM Web Agent — Renew 3 PC License / 12 months",
     },
+    misc: {
+      orderSaveFailed: "Order save failed.",
+      genericError: "Error",
+    },
+    guide: {
+      faqTitle: "FAQ",
+      buyPricing: "Buy / Pricing",
+    },
   },
+  site: siteEn,
 } as const;
 
 export type Dictionary = typeof dictionary;

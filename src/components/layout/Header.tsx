@@ -4,19 +4,24 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
-import { navLinks, navLinksEn } from "@/content/site";
+import { localeFromPathname, localePath, type Locale } from "@/i18n/config";
+import { buildNavLinks } from "@/i18n/nav";
+import { dictionary as itDict } from "@/i18n/dictionaries/it";
+import { dictionary as enDict } from "@/i18n/dictionaries/en";
 import { usePathname } from "next/navigation";
-import type { Locale } from "@/i18n/config";
+
+function dictForLocale(locale: Locale) {
+  return locale === "en" ? enDict : itDict;
+}
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname() || "/";
-  const isEn = pathname === "/en" || pathname.startsWith("/en/");
-  const locale: Locale = isEn ? "en" : "it";
-  const homeHref = isEn ? "/en" : "/";
-  const links = isEn ? navLinksEn : navLinks;
-  const contactLabel = isEn ? "Contact us" : "Contattaci";
+  const locale = localeFromPathname(pathname);
+  const dict = dictForLocale(locale);
+  const homeHref = localePath(locale, "/");
+  const links = buildNavLinks(locale, dict);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -51,23 +56,20 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <LanguageSwitcher
-            locale={locale}
-            switchLabel={isEn ? "Italiano" : "English"}
-          />
+          <LanguageSwitcher locale={locale} switchLabel={dict.meta.switchTo} />
           <a
-            href={isEn ? "/en#contatti" : "/#contatti"}
+            href={`${homeHref}#contatti`}
             className="hidden rounded-full bg-gradient-to-r from-diste-blue via-diste-azure to-diste-green px-4 py-2 text-sm font-semibold text-white shadow-md shadow-diste-blue/20 transition hover:brightness-110 sm:inline-flex"
           >
-            {contactLabel}
+            {dict.nav.contactCta}
           </a>
           <button
             type="button"
-            aria-label="Apri menu"
+            aria-label={dict.site.header.openMenu}
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-800 lg:hidden"
             onClick={() => setOpen((v) => !v)}
           >
-            <span className="sr-only">Menu</span>
+            <span className="sr-only">{dict.site.header.menuSr}</span>
             <svg
               className="h-5 w-5"
               viewBox="0 0 24 24"
@@ -107,11 +109,11 @@ export function Header() {
               </a>
             ))}
             <a
-              href={isEn ? "/en#contatti" : "/#contatti"}
+              href={`${homeHref}#contatti`}
               className="mt-2 rounded-full bg-gradient-to-r from-diste-blue via-diste-azure to-diste-green px-4 py-3 text-center text-sm font-semibold text-white"
               onClick={() => setOpen(false)}
             >
-              {contactLabel}
+              {dict.nav.contactCta}
             </a>
           </div>
         </div>

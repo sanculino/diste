@@ -1,7 +1,10 @@
 import { Section } from "@/components/ui/Section";
-import { software } from "@/content/site";
+import type { SiteContent } from "@/i18n/get-dictionary";
 
-export function SoftwareInnovazione() {
+type Props = { site: SiteContent };
+
+export function SoftwareInnovazione({ site }: Props) {
+  const { software } = site;
   return (
     <Section
       id="software"
@@ -17,21 +20,12 @@ export function SoftwareInnovazione() {
       />
       <div className="relative grid gap-10 lg:grid-cols-2 lg:items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            {software.title}
-          </h2>
-          <p className="mt-6 text-lg leading-relaxed text-white/90">
-            {software.body}
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{software.title}</h2>
+          <p className="mt-6 text-lg leading-relaxed text-white/90">{software.body}</p>
         </div>
         <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-md sm:p-8">
           <ul className="space-y-4 text-sm sm:text-base">
-            {[
-              "Gestionali e piattaforme web su misura",
-              "Marketplace e integrazioni con processi aziendali",
-              "Automazione, raccolta dati e tracciabilità",
-              "CRM, ordini, produzione e marketing digitale",
-            ].map((line) => (
+            {software.bullets.map((line) => (
               <li key={line} className="flex gap-3">
                 <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-white" />
                 <span className="text-white/95">{line}</span>

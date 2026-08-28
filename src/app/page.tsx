@@ -9,21 +9,23 @@ import { Progetti } from "@/components/sections/Progetti";
 import { Clienti } from "@/components/sections/Clienti";
 import { Partner } from "@/components/sections/Partner";
 import { Contatti } from "@/components/sections/Contatti";
+import { getDictionary } from "@/i18n/get-dictionary";
 
-export default function Home() {
+export default async function Home() {
+  const dict = await getDictionary("it");
   return (
     <>
       <Header />
       <main>
-        <Hero />
-        <ChiSiamo />
-        <MissionVision />
-        <Servizi />
-        <SoftwareInnovazione />
-        <Progetti />
-        <Clienti />
-        <Partner />
-        <Contatti />
+        <Hero site={dict.site} />
+        <ChiSiamo site={dict.site} />
+        <MissionVision site={dict.site} />
+        <Servizi site={dict.site} />
+        <SoftwareInnovazione site={dict.site} />
+        <Progetti site={dict.site} locale="it" />
+        <Clienti site={dict.site} />
+        <Partner site={dict.site} />
+        <Contatti site={dict.site} />
       </main>
       <Footer />
     </>

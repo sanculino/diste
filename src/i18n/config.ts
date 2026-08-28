@@ -13,32 +13,38 @@ export function localePath(locale: Locale, path: string): string {
   return clean === "/" ? "/en" : `/en${clean}`;
 }
 
-/** IT ↔ EN paths that differ beyond the /en prefix */
-const LOCALE_PATH_PAIRS: ReadonlyArray<readonly [it: string, en: string]> = [
-  ["/pm-web-agent/come-funziona", "/en/pm-web-agent/how-it-works"],
-];
-
-function mapLocalePath(path: string, toEn: boolean): string {
-  for (const [itPath, enPath] of LOCALE_PATH_PAIRS) {
-    if (toEn && path === itPath) return enPath;
-    if (!toEn && path === enPath) return itPath;
-  }
-  return path;
+/** Detect locale from a pathname (no cookies — URL is authoritative). */
+export function localeFromPathname(pathname: string): Locale {
+  return pathname === "/en" || pathname.startsWith("/en/") ? "en" : "it";
 }
 
-export function switchLocalePath(currentLocale: Locale, pathname: string): string {
-  const enPrefix = "/en";
-  const isEn = pathname === enPrefix || pathname.startsWith(`${enPrefix}/`);
-  const base = isEn
-    ? pathname === enPrefix
-      ? "/"
-      : pathname.slice(enPrefix.length) || "/"
-    : pathname;
+/** Strip /en prefix to get the locale-neutral path. */
+export function stripLocalePrefix(pathname: string): string {
+  if (pathname === "/en") return "/";
+  if (pathname.startsWith("/en/")) return pathname.slice(3) || "/";
+  return pathname;
+}
 
-  const target = currentLocale === "it" ? "en" : "it";
-  if (target === "en") {
-    const mapped = mapLocalePath(base, true);
-    return mapped === "/" ? "/en" : mapped.startsWith("/en") ? mapped : `/en${mapped}`;
+/** IT ↔ EN paths that differ beyond the /en prefix (locale-neutral paths). */
+const LOCALE_PATH_PAIRS: ReadonlyArray<readonly [it: string, en: string]> = [
+  ["/pm-web-agent/come-funziona", "/pm-web-agent/how-it-works"],
+  ["/pm-web-agent/rinnova", "/pm-web-agent/renew"],
+];
+
+function mapLocalePath(basePath: string, toEn: boolean): string {
+  for (const [itPath, enPath] of LOCALE_PATH_PAIRS) {
+    if (toEn && basePath === itPath) return enPath;
+    if (!toEn && basePath === enPath) return itPath;
   }
-  return mapLocalePath(pathname, false);
+  return basePath;
+}
+
+/** Switch the current pathname to the equivalent page in the other locale. */
+export function switchLocalePath(currentLocale: Locale, pathname: string): string {
+  const base = stripLocalePrefix(pathname);
+  const target: Locale = currentLocale === "it" ? "en" : "it";
+  if (target === "en") {
+    return localePath("en", mapLocalePath(base, true));
+  }
+  return mapLocalePath(base, false);
 }

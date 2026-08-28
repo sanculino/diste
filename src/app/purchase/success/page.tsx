@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PurchaseSuccessClient } from "@/components/product/PurchaseSuccessClient";
+import { getDictionary } from "@/i18n/get-dictionary";
 
 type Props = {
   searchParams: Promise<{ order?: string }>;
@@ -9,6 +10,7 @@ type Props = {
 export default async function PurchaseSuccessPage({ searchParams }: Props) {
   const sp = await searchParams;
   const orderId = (sp.order || "").trim();
+  const dict = await getDictionary("it");
 
   return (
     <>
@@ -18,7 +20,7 @@ export default async function PurchaseSuccessPage({ searchParams }: Props) {
           <PurchaseSuccessClient locale="it" orderId={orderId} />
         ) : (
           <div className="mx-auto max-w-xl px-4 py-16 text-center text-slate-600">
-            Ordine non specificato.
+            {dict.site.purchase.orderMissing}
           </div>
         )}
       </main>

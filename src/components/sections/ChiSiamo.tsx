@@ -1,7 +1,10 @@
 import { Section } from "@/components/ui/Section";
-import { chiSiamo } from "@/content/site";
+import type { SiteContent } from "@/i18n/get-dictionary";
 
-export function ChiSiamo() {
+type Props = { site: SiteContent };
+
+export function ChiSiamo({ site }: Props) {
+  const { chiSiamo } = site;
   return (
     <Section id="chi-siamo" className="bg-slate-50/80">
       <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
@@ -11,9 +14,7 @@ export function ChiSiamo() {
           </h2>
           <div className="mt-4 h-1 w-20 rounded-full bg-gradient-to-r from-diste-blue to-diste-green" />
         </div>
-        <p className="text-lg leading-relaxed text-slate-600">
-          {chiSiamo.body}
-        </p>
+        <p className="text-lg leading-relaxed text-slate-600">{chiSiamo.body}</p>
       </div>
     </Section>
   );

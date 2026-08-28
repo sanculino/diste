@@ -4,9 +4,12 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { comeFunzionaPmwa } from "@/content/come-funziona-pmwa";
+import { dictionary as itDict } from "@/i18n/dictionaries/it";
+import { dictionary as enDict } from "@/i18n/dictionaries/en";
 import type { Locale } from "@/i18n/config";
+import type { PmwaDictionary } from "@/i18n/get-dictionary";
 
-type Props = { locale: Locale };
+type Props = { locale: Locale; dict: PmwaDictionary };
 
 export function guideMetadata(locale: Locale): Metadata {
   const base = "https://distemanagementsoftware.it";
@@ -26,7 +29,7 @@ export function guideMetadata(locale: Locale): Metadata {
   };
 }
 
-export function GuidePage({ locale }: Props) {
+export function GuidePage({ locale, dict }: Props) {
   const content = comeFunzionaPmwa(locale);
   const buyHref = locale === "en" ? "/en/pm-web-agent" : "/pm-web-agent";
   const homeHref = locale === "en" ? "/en" : "/";
@@ -36,7 +39,10 @@ export function GuidePage({ locale }: Props) {
       <Header />
       <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-6 flex justify-end">
-          <LanguageSwitcher locale={locale} switchLabel={locale === "it" ? "English" : "Italiano"} />
+          <LanguageSwitcher
+            locale={locale}
+            switchLabel={locale === "it" ? itDict.meta.switchTo : enDict.meta.switchTo}
+          />
         </div>
         <h1 className="text-3xl font-bold text-slate-900">{content.title}</h1>
         <p className="mt-4 text-slate-600">{content.intro}</p>
@@ -77,7 +83,7 @@ export function GuidePage({ locale }: Props) {
         </div>
         {content.faq.length > 0 ? (
           <section className="mt-12">
-            <h2 className="text-xl font-semibold text-slate-900">FAQ</h2>
+            <h2 className="text-xl font-semibold text-slate-900">{dict.guide.faqTitle}</h2>
             <dl className="mt-4 space-y-4">
               {content.faq.map((f) => (
                 <div key={f.q}>
@@ -93,10 +99,10 @@ export function GuidePage({ locale }: Props) {
             href={buyHref}
             className="rounded-full bg-gradient-to-r from-diste-blue to-diste-green px-5 py-2.5 text-sm font-semibold text-white"
           >
-            {locale === "en" ? "Buy / Pricing" : "Acquista / Prezzi"}
+            {dict.guide.buyPricing}
           </Link>
           <Link href={homeHref} className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700">
-            {locale === "en" ? "Back to website" : "Torna al sito"}
+            {dict.ctaBack}
           </Link>
         </div>
       </main>

@@ -175,12 +175,12 @@ export function RenewPmwa({ locale, dict }: Props) {
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Order save failed");
+      if (!res.ok) throw new Error(data.error || dict.misc.orderSaveFailed);
       setBillingEmail(payload.customer_email);
       setBillingReady(true);
       return true;
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Error");
+      window.alert(err instanceof Error ? err.message : dict.misc.genericError);
       return false;
     } finally {
       setSubmitting(false);
